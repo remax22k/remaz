@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>لعبة XO ضد الكمبيوتر الذكي - Minimax</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fceef5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #d63384;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: #fff0f6;
+      border: 2px solid #d63384;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cell:hover {
+      background-color: #ffe3ec;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #c2255c;
+      min-height: 30px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #f783ac;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #d63384;
+    }
+  </style>
+</head>
+<body>
+  <h1>XO W COMP</h1>
+  <div id="board"></div>
+  <div id="message"></div>
+  <button onclick="resetGame()">game over  🔁</button>
+
+  <script>
+    const board = document.getElementById("board");
+    const message = document.getElementById("message");
+    let cells = Array(9).fill(null);
+    let gameActive = true;
+    const human = "X";
+    const ai = "O";
+
+    function renderBoard() {
+      board.innerHTML = "";
+      cells.forEach((cell, index) => {
+        const div = document.createElement("div");
+        div.className = "cell";
+        div.textContent = cell;
+        div.addEventListener("click", () => humanMove(index));
+        board.appendChild(div);
+      });
+    }
+
+    function humanMove(index) {
+      if (!gameActive || cells[index]) return;
+      cells[index] = human;
+      renderBoard();
+      if (checkWinner(cells, human)) {
+        message.textContent = "Congratulations, you won!🎉";
+        gameActive = false;
+        return;
+      }
+      if (isTie(cells)) {
+        message.textContent = "draw";
+        gameActive = false;
+        return;
+      }
+      message.textContent = "comp turn..";
+      setTimeout(() => {
+        aiMove();
+        renderBoard();
+        if (checkWinner(cells, ai)) {
+          message.textContent = "comp won 💻";
+          gameActive = false;
+          return;
+        }
+        if (isTie(cells)) {
+          message.textContent = "draw";
+          gameActive = false;
+          return;
+        }
+       message.textContent = "ur turn";
+      }, 500);
+    }
+
+    function aiMove() {
+      const bestMove = minimax(cells, ai).index;
+      cells[bestMove] = ai;
+    }
+
+    function checkWinner(boardState, player) {
+      const wins = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      return wins.some(combo => 
+        combo.every(index => boardState[index] === player)
+      );
+    }
+
+    function isTie(boardState) {
+      return boardState.every(cell => cell !== null);
+    }
+
+    function minimax(newBoard, player) {
+      const availSpots = newBoard
+        .map((val, idx) => val === null ? idx : null)
+        .filter(v => v !== null);
+
+      if (checkWinner(newBoard, human)) {
+        return { score: -10 };
+      } else if (checkWinner(newBoard, ai)) {
+        return { score: 10 };
+      } else if (availSpots.length === 0) {
+        return { score: 0 };
+      }
+
+      const moves = [];
+
+      for (let i = 0; i < availSpots.length; i++) {
+        const move = {};
+        move.index = availSpots[i];
+        newBoard[availSpots[i]] = player;
+
+        if (player === ai) {
+          const result = minimax(newBoard, human);
+          move.score = result.score;
+        } else {
+          const result = minimax(newBoard, ai);
+          move.score = result.score;
+        }
+
+        newBoard[availSpots[i]] = null;
+        moves.push(move);
+      }
+
+      let bestMove;
+      if (player === ai) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score > bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score < bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      }
+
+      return moves[bestMove];
+    }
+
+    function resetGame() {
+      cells = Array(9).fill(null);
+      gameActive = true;
+      message.textContent = "ur turn";
+
+      renderBoard();
+    }
+
+    resetGame();
+  </script>
+</body>
+</html>
+
+
+
